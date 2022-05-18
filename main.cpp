@@ -233,14 +233,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma region 描画初期化処理
 	// 頂点データ
 	XMFLOAT3 vertices[] = {
-	
-		{- 0.5f, 0.5f, 1.0f}, // Top-left
-		{0.5f,  0.5f, 0.0f}, // Top-right
-		{0.5f, -0.5f, 0.0f}, // Bottom-right
 
-		{ 0.5f, -0.5f, 0.0f}, // Bottom-right
-		{ - 0.5f, -0.5f, 1.0f}, // Bottom-left
-		{ - 0.5f,  0.5f, 1.0f},  // Top-left
+	{ -0.5f, -0.5f, 0.0f }, // 左下　インデックス0
+	{ -0.5f, +0.5f, 0.0f }, // 左上　インデックス1
+	{ +0.5f, -0.5f, 0.0f }, // 右下　インデックス2
+	{ +0.5f, +0.5f, 0.0f }, // 右上　インデックス3
 	};
 	// 頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
 	UINT sizeVB = static_cast<UINT>(sizeof(XMFLOAT3) * _countof(vertices));
@@ -253,8 +250,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	uint16_t indices[] =
 	{
 		0, 1, 2, // 三角形1つ目
-		2, 3, 3, // 三角形2つ目
-		
+		1, 2, 3, // 三角形2つ目
 	};
 
 
@@ -613,7 +609,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		commandlist->IASetIndexBuffer(&ibView);
 
 		// 描画コマンド
-		commandlist->DrawInstanced(_countof(vertices), 1, 0, 0);
+		//commandlist->DrawInstanced(_countof(vertices), 1, 0, 0);
 		commandlist->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0);
 	
 
