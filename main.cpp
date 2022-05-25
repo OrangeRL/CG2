@@ -232,26 +232,34 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma region 描画初期化処理
 	// 頂点データ
-	XMFLOAT3 vertices[] = {
-
-	{ -0.5f, -0.5f, 0.0f }, // 左下　インデックス0
-	{ -0.5f, +0.5f, 0.0f }, // 左上　インデックス1
-	{ +0.5f, -0.5f, 0.0f }, // 右下　インデックス2
-	{ +0.5f, +0.5f, 0.0f }, // 右上　インデックス3
+	// 頂点データ構造体
+	struct Vertex
+	{
+		XMFLOAT3 pos; // xyz座標
+		XMFLOAT2 uv;  // uv座標
 	};
+	// 頂点データ
+	Vertex vertices[] = {
+		// x      y     z       u     v
+		{{-0.4f, -0.7f, 0.0f}, {0.0f, 1.0f}}, // 左下
+		{{-0.4f, +0.7f, 0.0f}, {0.0f, 0.0f}}, // 左上
+		{{+0.4f, -0.7f, 0.0f}, {1.0f, 1.0f}}, // 右下
+		{{+0.4f, +0.7f, 0.0f}, {1.0f, 0.0f}}, // 右上
+	};
+
 	// 頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
-	UINT sizeVB = static_cast<UINT>(sizeof(XMFLOAT3) * _countof(vertices));
+   UINT sizeVB = static_cast<UINT>(sizeof(vertices[0]) * _countof(vertices));
 
 	// 定数バッファ用データ構造体（マテリアル）
 	struct ConstBufferDataMaterial {
 		XMFLOAT4 color; // 色 (RGBA)
 	};
 	// インデックスデータ
-	uint16_t indices[] =
-	{
+	unsigned short indices[] = {
 		0, 1, 2, // 三角形1つ目
 		1, 2, 3, // 三角形2つ目
 	};
+
 
 
 	// 頂点バッファの設定
@@ -322,6 +330,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 	// 頂点バッファの生成
+
 	ID3D12Resource* vertBuff = nullptr;
 	result = device->CreateCommittedResource(
 		&heapProp, // ヒープ設定
@@ -356,8 +365,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;   //全てのシェーダから見える
 
 	// GPU上のバッファに対応した仮想メモリ(メインメモリ上)を取得
-	XMFLOAT3* vertMap = nullptr;
+	Vertex* vertMap = nullptr;
 	result = vertBuff->Map(0, nullptr, (void**)&vertMap);
+
 	assert(SUCCEEDED(result));
 	// 全頂点に対して
 	for (int i = 0; i < _countof(vertices); i++) {
@@ -373,7 +383,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// 頂点バッファのサイズ
 	vbView.SizeInBytes = sizeVB;
 	// 頂点1つ分のデータサイズ
-	vbView.StrideInBytes = sizeof(XMFLOAT3);
+	vbView.StrideInBytes = sizeof(vertices[0]);
 
 	ID3DBlob* vsBlob = nullptr; // 頂点シェーダオブジェクト
 	ID3DBlob* psBlob = nullptr; // ピクセルシェーダオブジェクト
@@ -428,8 +438,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// 頂点レイアウト
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}, // (1行で書いたほうが見やすい)
+		{ // xyz座標(1行で書いたほうが見やすい)
+			"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
+			D3D12_APPEND_ALIGNED_ELEMENT,
+			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+		},
+		{ // uv座標(1行で書いたほうが見やすい)
+			"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0,
+			D3D12_APPEND_ALIGNED_ELEMENT,
+			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+		},
 	};
+
 
 	// グラフィックスパイプライン設定
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc{};
@@ -491,6 +511,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 	rootSignatureDesc.pParameters = &rootParam; //ルートパラメータの先頭アドレス
 	rootSignatureDesc.NumParameters = 1;        //ルートパラメータ数
+	
+
 	// ルートシグネチャのシリアライズ
 	ID3DBlob* rootSigBlob = nullptr;
 	result = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0,
@@ -552,7 +574,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		// 3.画面クリア R G B A
 
-		FLOAT clearColor[] = { 0.1f,0.25f, 0.5f,0.0f }; // 青っぽい色
+		FLOAT clearColor[] = { 0.25f,0.25f, 0.0f,0.0f };
 		if (key[DIK_SPACE])     // スペースキーが押されていたら
 		{
 			clearColor[0] = { 0.0f };
@@ -563,7 +585,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// 値を書き込むと自動的に転送される
 		//constMapMaterial->color = XMFLOAT4(1, 0, 0, 0.5f);
 		
-		constMapMaterial->color = XMFLOAT4(1, 0, 0, 0.5f);
+		constMapMaterial->color = XMFLOAT4(0.0f, 0.01f, 0.25f, 1.0f);
 		
 		commandlist->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 		
