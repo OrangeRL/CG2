@@ -242,15 +242,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		XMFLOAT2 uv;  // uv座標
 	};
 	//頂点データ
-	Vertex vertices[] =
-	{
-		//  x	 y	    z	   u	v
-		{{0.0f,100.0f,0.0f},{0.0f,1.0f}},//左下
-		{{0.0f,0.0f,0.0f},{0.0f,0.0f}},//左上
-		{{100.0f,100.0f,0.0f},{1.0f,1.0f}},//右下
-		{{100.0f,0.0f,0.0f},{1.0f,0.0f}},//右上
-	};
+	//Vertex vertices[] =
+	//{
+	//	//  x	 y	    z	   u	v
+	//	{{0.0f,100.0f,0.0f},{0.0f,1.0f}},	//左下
+	//	{{0.0f,0.0f,0.0f},{0.0f,0.0f}},		//左上
+	//	{{100.0f,100.0f,0.0f},{1.0f,1.0f}},	//右下
+	//	{{100.0f,0.0f,0.0f},{1.0f,0.0f}},	//右上
+	//};
 
+
+	Vertex vertices[] = {
+		//    x		 y	   z	  u    v
+		{{-50.0f,-50.0f,50.0f},{0.0f,1.0f}},	//左下
+		{{-50.0f,50.0f,50.0f}, {0.0f,0.0f}},	//左上
+		{{50.0f,-50.0f,50.0f}, {1.0f,1.0f}},	//右下
+		{{50.0f,50.0f,50.0f},  {1.0f,0.0f}},	//右上
+	};
 
 	//// 頂点データ
 	//XMFLOAT3 vertices[] = {
@@ -379,11 +387,40 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		assert(SUCCEEDED(result));
 		//単位行列を代入
 		constMapTransform->mat = XMMatrixIdentity();
-		constMapTransform->mat.r[0].m128_f32[0] = 2.0f / 1280;
+		/*constMapTransform->mat.r[0].m128_f32[0] = 2.0f / 1280;
 		constMapTransform->mat.r[1].m128_f32[1] = -2.0f / 720;
 		constMapTransform->mat.r[3].m128_f32[0] = -1.0f;
-		constMapTransform->mat.r[3].m128_f32[1] = 1.0f;
+		constMapTransform->mat.r[3].m128_f32[1] = 1.0f;*/
+
+		//並行投影行列の計算
+		constMapTransform->mat = XMMatrixOrthographicOffCenterLH(
+			1.0f,	//ViewLeft
+			0.0f,	//ViewRight
+			0.1f,	//ViewBottom
+			1.0f,	//ViewTop
+			0.1f,	//NearZ
+			1.0f);	//Farz
 	}
+
+	//射影変換行列(透視投影)
+	XMMATRIX matProjection = XMMatrixPerspectiveFovLH(
+		XMConvertToRadians(45.0f),
+		(float)window_width / window_height,
+		0.1f, 1000.0f); 
+		//TODO)次回、ここでビュー変換行列(透視投影)を計算
+		
+		//定数バッファに転送
+		constMapTransform->mat = matProjection;
+
+
+	////透視投影行列の計算
+	//constMapTransform->mat = XMMatrixPerspectiveFovLH(
+	//	XMConvertToRadians(45.0f),//上下画角45度
+	//	(float)window_width /window_height,//アスペクト比（画面横幅/画面縦幅）
+	//	0.1f,1000.0f//前端、奥端
+	//);
+
+	//constMapTransform->mat = matProjection;
 
 	// インデックスバッファの生成
 	ID3D12Resource* indexBuff = nullptr;
