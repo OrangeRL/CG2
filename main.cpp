@@ -17,6 +17,26 @@ using namespace DirectX;
 #include <d3dcompiler.h>
 #pragma comment(lib,"d3dcompiler.lib")
 
+struct ConstBufferDataTransform {
+	XMMATRIX mat;//3D変換行列
+};
+
+//3Dオブジェクト型
+struct Object3d {
+	//定数バッファ（行列用）
+	ID3D12Resource* constBuffTransform;
+	//定数バッファマップ（行列用）
+	ConstBufferDataTransform* constMapTransform;
+	//アフィン変換情報
+	XMFLOAT3 scale = { 1,1,1 };
+	XMFLOAT3 rotation = { 0,0,0 };
+	XMFLOAT3 position = { 0,0,0 };
+	//ワールド変換行列
+	XMMATRIX matWorld;
+	//親オブジェクトへのポインタ
+	Object3d* parent = nullptr;
+};
+
 LRESULT WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	switch (msg) {
 	case WM_DESTROY:
@@ -1091,7 +1111,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		constMapTransform0->mat = matWorld * matView * matProjection;
 
 		//-------------------------------------------------------------------------------
-		
+
 		//ワールド変換行列
 		XMMATRIX matWorld1;
 		matWorld1 = XMMatrixIdentity();
